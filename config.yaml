@@ -1,0 +1,6 @@
+package: goord
+output: client.gen.go
+generate:
+  models: true
+  client: true
+  strict-server: false
