@@ -1,5 +1,5 @@
 package: goord
-output: client.gen.go
+output: client.go
 generate:
   models: true
   client: true
