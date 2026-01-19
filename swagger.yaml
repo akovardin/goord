@@ -342,6 +342,7 @@ paths:
       parameters:
       - $ref: '#/components/parameters/query_offset'
       - $ref: '#/components/parameters/query_limit'
+      - $ref: '#/components/parameters/query_person_external_id'
       responses:
         200:
           $ref: '#/components/responses/get_v1_pad_response_200'
@@ -1934,6 +1935,16 @@ components:
         type: integer
         format: int32
         default: 100
+    query_person_external_id:
+      name: person_external_id
+      in: query
+      description: |
+        Опциональный параметр, предоставленный для фильтрации списка площадок по представляющему лицу.
+      example: 123e4567-e89b-12d3-a456-426655440000
+      schema:
+        minLength: 1
+        maxLength: 255
+        type: string
     query_update_additional_contracts_parties:
       name: update_additional_contracts_parties
       in: query
@@ -3683,8 +3694,6 @@ components:
           $ref: '#/components/schemas/InvoiceV3ItemAmount'
         creatives:
           $ref: '#/components/schemas/InvoiceV3ItemCreativesArray'
-        flags:
-          $ref: '#/components/schemas/InvoiceItemFlags'
       oneOf:
       - properties:
           contract_external_id:
@@ -3764,8 +3773,6 @@ components:
           $ref: '#/components/schemas/InvoiceClientRole'
         contractor_role:
           $ref: '#/components/schemas/InvoiceContractorRole'
-        flags:
-          $ref: '#/components/schemas/InvoiceFlags'
     InvoiceV4Header:
       type: object
       required:
@@ -3796,7 +3803,7 @@ components:
         contractor_role:
           $ref: '#/components/schemas/InvoiceContractorRole'
         flags:
-          $ref: '#/components/schemas/InvoiceFlags'
+          $ref: '#/components/schemas/InvoiceV4Flags'
     InvoiceV3ItemsArray:
       type: object
       required:
@@ -4969,7 +4976,11 @@ components:
         Если тип договора, к которому поставляется акт - "_Оказание услуг" ('service') - исполнителем указываемого здесь договора должен являться исполнитель договора, к которому поставляется акт
         Если тип договора, к которому поставляется акт - "_Посредничество_" ('mediation') - исполнителем указываемого здесь договора должен являться заказчик договора, к которому поставляется акт
 
-        В поле можно сослаться только на договор типа "_Посредничество_" (`mediation`) и только если у него выставлен флаг "_деньги поступают от подрядчика (исполнителя) клиенту (заказчику)_" (`agent_acting_for_publisher`) и только если исполнитель по этому договоре тот же, что и исполнитель по договору акта.
+        В поле можно сослаться на договор, только если выполнены все следующие условия:
+        * Договор типа "_Посредничество_" (`mediation`)
+        * У договора выставлен флаг "_деньги поступают от подрядчика (исполнителя) клиенту (заказчику)_" (`agent_acting_for_publisher`).
+        * Исполнитель по договору тот же, что и исполнитель по договору акта.
+        * Заказчик в договоре не является иностранным лицом.
 
         Передача данного поля говорит о том, что договор, к которому регистрируется акт, заключен по поручительству со стороны рекламораспространителя.
     InvoiceDate:
@@ -5159,15 +5170,15 @@ components:
       - $ref: '#/components/schemas/InvoicePersonRoleEnum'
       description: |
         Роль подрядчика (исполнителя) в договоре, к которому добавляется акт. Более подробно о том, какие сочетания ролей заказчика и подрядчика возможны, читайте в описании поля `client_role`.
-    InvoiceFlags:
+    InvoiceV4Flags:
       uniqueItems: true
       nullable: true
       type: array
       description: |
         Дополнительная информация об акте. Возможные значения:
 
-        * 'social' - сигнализирует о том, что акт имеет свойство <a href="https://ord.vk.com/help/api/glossary/ad.html#social" target="_blank">социальной рекламы</a>.
-        * 'social_quota' - сигнализирует о том, что акт имеет свойство <a href="https://ord.vk.com/help/api/glossary/ad.html#social-quota" target="_blank">социальной рекламы по квоте</a>.
+        * 'social' - сигнализирует о том, что акт имеет свойство <a href="https://ord.vk.com/help/api/glossary/ad.html#social" target="_blank">социальной рекламы</a>. Значение можно указать, только если значение 'social_quota' не указано.
+        * 'social_quota' - сигнализирует о том, что акт имеет свойство <a href="https://ord.vk.com/help/api/glossary/ad.html#social-quota" target="_blank">социальной рекламы по квоте</a>. Значение можно указать, только если значение 'social' не указано.
       items:
         enum:
         - social
@@ -5175,24 +5186,6 @@ components:
         type: string
       example:
       - social
-      - social_quota
-    InvoiceItemFlags:
-      uniqueItems: true
-      nullable: true
-      type: array
-      description: |
-        Дополнительная информация о договоре из разаллокаций акта. Возможные значения:
-
-        * 'social' - сигнализирует о том, что договор из разаллокаций акта имеет свойство <a href="https://ord.vk.com/help/api/glossary/ad.html#social" target="_blank">социальной рекламы</a>.
-        * 'social_quota' - сигнализирует о том, что договор из разаллокаций акта имеет свойство <a href="https://ord.vk.com/help/api/glossary/ad.html#social-quota" target="_blank">социальной рекламы по квоте</a>.
-      items:
-        enum:
-        - social
-        - social_quota
-        type: string
-      example:
-      - social
-      - social_quota
     InvoiceItemContractExternalId:
       allOf:
       - $ref: '#/components/schemas/InvoiceShortStringFormat'
@@ -5261,6 +5254,8 @@ components:
           $ref: '#/components/schemas/InvoiceV4ItemAmount'
         creatives:
           $ref: '#/components/schemas/InvoiceV4ItemCreativesArray'
+        flags:
+          $ref: '#/components/schemas/InvoiceItemV4Flags'
     InvoiceItemsArrayDescription:
       description: |
         <a id='invoice-v3-items-array'/>
@@ -5593,7 +5588,7 @@ components:
       pattern: ^\d{1,2}(\.\d{1,2})?
       description: |-
         Ставка НДС в процентах.
-        Максимальное значение `20`
+        Максимальное значение `22` при дате акта >= 01.01.2026, иначе `20`.
       example: '20'
     InvoiceV4AmountElementVatRate:
       type: string
@@ -5604,7 +5599,10 @@ components:
       - '7'
       - '10'
       - '20'
-      description: Ставка НДС в процентах либо `without_vat`.
+      - '22'
+      description: |-
+        Ставка НДС в процентах либо `without_vat`.
+        Если дата акта >= 01.01.2026, то вместо `20`, нужно использовать `22`, иначе `20`.
       example: '20'
     InvoiceV3AmountGroupScale2:
       type: object
@@ -5686,6 +5684,22 @@ components:
       - publisher
       - mediator
       example: agency
+    InvoiceItemV4Flags:
+      uniqueItems: true
+      nullable: true
+      type: array
+      description: |
+        Дополнительная информация о договоре из разаллокаций акта. Возможные значения:
+
+        * 'social' - сигнализирует о том, что договор из разаллокаций акта имеет свойство <a href="https://ord.vk.com/help/api/glossary/ad.html#social" target="_blank">социальной рекламы</a>. Значение можно указать, только если значение 'social_quota' не указано.
+        * 'social_quota' - сигнализирует о том, что договор из разаллокаций акта имеет свойство <a href="https://ord.vk.com/help/api/glossary/ad.html#social-quota" target="_blank">социальной рекламы по квоте</a>. Значение можно указать, только если значение 'social' не указано.
+      items:
+        enum:
+        - social
+        - social_quota
+        type: string
+      example:
+      - social_quota
     InvoiceV4ItemAmount:
       type: object
       required:
@@ -5864,6 +5878,7 @@ components:
       - external_id
       - name
       - erir_status
+      - erir_tax_status
       - updated_by_user_ts
       - processed_by_ord_ts
       - sent_to_erir_ts
@@ -5900,6 +5915,15 @@ components:
              * `invoice` — порядковый номер акта;
              * `statistics` — имя связанного креатива и название связанной площадки через / (creative_name / pad_name).
           example: Креатив 1. Приоритетное размещение школы
+        erir_tax_status:
+          type: string
+          description: |
+            Поле присутствует только у актов. Статус блокировки акта. Возможные значения:
+
+            * `no_tax` — акт не будет заблокирован.
+            * `calculated` — для данного акта будут проведены начисления, но он еще не заблокирован.
+            * `blocked` — для данного акта были проведены начисления, и он уже заблокирован.
+          example: blocked
         erir_status:
           $ref: '#/components/schemas/ErirStatusdErirStatus'
         updated_by_user_ts:
