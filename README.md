@@ -37,7 +37,7 @@ func main() {
    persons, err := client.GetPersons(context.Background(), 0, 10)
    if err != nil {
       log.Printf("Error getting persons: %v\n", err)
-	} else {
+   } else {
       fmt.Printf("Retrieved %d persons (total: %d)\n", len(persons.ExternalIDs), persons.TotalItemsCount)
       for i, id := range persons.ExternalIDs {
          fmt.Printf("  %d. %s\n", i+1, id)
