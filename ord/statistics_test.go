@@ -5,14 +5,12 @@ import (
 	"testing"
 )
 
-func TestStatistics(t *testing.T) {
-	// Create a new client
-	client := NewClient(Config{
-		BaseURL: "https://api-sandbox.ord.vk.com",
-		Token:   "test-token",
-	})
+func TestClient_Statistics(t *testing.T) {
+	client, _ := NewClient(
+		WithBase("https://api-sandbox.ord.vk.com"),
+		WithToken("test-token"),
+	)
 
-	// Test CreateStatisticsV2
 	t.Run("CreateStatisticsV2", func(t *testing.T) {
 		statistics := StatisticsV2ItemsArray{
 			Items: []StatisticsV2Item{
@@ -26,14 +24,12 @@ func TestStatistics(t *testing.T) {
 			},
 		}
 
-		// This would fail without a real token, but we're just testing the method signature
 		_, err := client.CreateStatisticsV2(context.Background(), statistics)
 		if err == nil {
 			t.Error("Expected error due to invalid token, got nil")
 		}
 	})
 
-	// Test CreateStatisticsV3
 	t.Run("CreateStatisticsV3", func(t *testing.T) {
 		statistics := StatisticsV3ItemsArray{
 			Items: []StatisticsV3Item{
@@ -49,23 +45,19 @@ func TestStatistics(t *testing.T) {
 			},
 		}
 
-		// This would fail without a real token, but we're just testing the method signature
 		_, err := client.CreateStatisticsV3(context.Background(), statistics)
 		if err == nil {
 			t.Error("Expected error due to invalid token, got nil")
 		}
 	})
 
-	// Test GetStatisticsList
 	t.Run("GetStatisticsList", func(t *testing.T) {
-		// This would fail without a real token, but we're just testing the method signature
 		_, err := client.GetStatisticsList(context.Background(), 0, 10)
 		if err == nil {
 			t.Error("Expected error due to invalid token, got nil")
 		}
 	})
 
-	// Test DeleteStatisticsV3
 	t.Run("DeleteStatisticsV3", func(t *testing.T) {
 		deleteReq := DeleteStatisticsRequest{
 			Items: []struct {
@@ -81,7 +73,6 @@ func TestStatistics(t *testing.T) {
 			},
 		}
 
-		// This would fail without a real token, but we're just testing the method signature
 		err := client.DeleteStatisticsV3(context.Background(), deleteReq)
 		if err == nil {
 			t.Error("Expected error due to invalid token, got nil")

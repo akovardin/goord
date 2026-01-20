@@ -14,10 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMediaMethods(t *testing.T) {
-	// Create a test server
+func TestClient_MediaMethods(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Handle different endpoints
 		switch {
 		case r.URL.Path == "/v1/media" && r.Method == "GET":
 			handleGetMediaList(w, r)
@@ -36,11 +34,10 @@ func TestMediaMethods(t *testing.T) {
 	}))
 	defer server.Close()
 
-	// Create a client with the test server URL
-	client := NewClient(Config{
-		BaseURL: server.URL,
-		Token:   "test-token",
-	})
+	client, _ := NewClient(
+		WithBase(server.URL),
+		WithToken("test-token"),
+	)
 
 	t.Run("GetMediaList", func(t *testing.T) {
 		response, err := client.GetMediaList(context.Background(), 0, 100)
@@ -82,7 +79,6 @@ func TestMediaMethods(t *testing.T) {
 	})
 }
 
-// Helper functions for test handlers
 func handleGetMediaList(w http.ResponseWriter, r *http.Request) {
 	response := MediaListResponse{
 		ExternalIDs:     []string{"media1", "media2"},
@@ -93,7 +89,6 @@ func handleGetMediaList(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleUploadMedia(w http.ResponseWriter, r *http.Request) {
-	// Parse multipart form
 	err := r.ParseMultipartForm(32 << 20) // 32MB max memory
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -101,7 +96,6 @@ func handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get the file from the form
 	file, _, err := r.FormFile("media_file")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -110,7 +104,6 @@ func handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Read the file content
 	content, err := io.ReadAll(file)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -118,7 +111,6 @@ func handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verify the content
 	expectedContent := "test file content"
 	if string(content) != expectedContent {
 		w.WriteHeader(http.StatusBadRequest)
@@ -126,7 +118,6 @@ func handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return success response with SHA256
 	response := struct {
 		SHA256 string `json:"sha256"`
 	}{

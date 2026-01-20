@@ -6,7 +6,36 @@ import (
 	"net/url"
 )
 
-// Creative represents a creative (креатив) in the ORD system
+const (
+	CreativePayTypeCPA   = "cpa"   // Cost Per Action, цена за действие.
+	CreativePayTypeCPC   = "cpc"   // Cost Per Click, цена за клик.
+	CreativePayTypeCPM   = "cpm"   // Cost Per Millennium, цена за 1 000 показов.
+	CreativePayTypeOther = "other" // иное.
+)
+
+const (
+	CreativeFormBanner                     = "banner"                         // баннер.
+	CreativeFormText                       = "text"                           // текстовый блок.
+	CreativeFormAudio                      = "audio"                          // аудиозапись.
+	CreativeFormVideo                      = "video"                          // видеоролик.
+	CreativeFormLiveAudio                  = "live_audio"                     // аудиотрансляция в прямом эфире.
+	CreativeFormLiveVideo                  = "live_video"                     // видеотрансляция в прямом эфире.
+	CreativeFormTextVideoBlock             = "text_video_block"               // текстовый блок с видео
+	CreativeFormTextGraphicBlock           = "text_graphic_block"             // текстово-графический блок
+	CreativeFormTextAudioBlock             = "text_audio_block"               // текстовый блок с аудио
+	CreativeFormTextGraphicVideoBlock      = "text_graphic_video_block"       // текстово-графический блок с видео
+	CreativeFormTextAudioVideoBlock        = "text_audio_video_block"         // текстовый блок с аудио и видео
+	CreativeFormTextGraphicAudioBlock      = "text_graphic_audio_block"       // текстово-графический блок с видео
+	CreativeFormTextGraphicAudioVideoBlock = "text_graphic_audio_video_block" // текстово-графический блок с аудио и видео
+	CreativeFormBannerHTML5                = "banner_html5"                   // HTML5-баннер
+)
+
+const (
+	CreativeFlagSocial      = "social"       // социальная реклама.
+	CreativeFlagNative      = "native"       // нативная реклама (только в GET, PUT не поддерживается).
+	CreativeFlagSocialQuota = "social_quota" // социальная реклама по квоте.
+)
+
 type Creative struct {
 	CreateDate          string    `json:"create_date,omitempty"`
 	ERID                string    `json:"erid"`
@@ -113,7 +142,7 @@ func (c *Client) GetCreatives(ctx context.Context, offset, limit int) (*Creative
 	path := fmt.Sprintf("/v3/creative?offset=%d&limit=%d", offset, limit)
 
 	var response CreativeListResponse
-	if err := c.makeRequest(ctx, "GET", path, nil, &response); err != nil {
+	if err := c.request(ctx, "GET", path, nil, &response); err != nil {
 		return nil, fmt.Errorf("failed to get creatives: %w", err)
 	}
 
@@ -126,7 +155,7 @@ func (c *Client) GetCreativeERIDs(ctx context.Context, offset, limit int) (*Crea
 	path := fmt.Sprintf("/v3/creative/list/erids?offset=%d&limit=%d", offset, limit)
 
 	var response CreativeERIDsListResponse
-	if err := c.makeRequest(ctx, "GET", path, nil, &response); err != nil {
+	if err := c.request(ctx, "GET", path, nil, &response); err != nil {
 		return nil, fmt.Errorf("failed to get creative ERIDs: %w", err)
 	}
 
@@ -139,7 +168,7 @@ func (c *Client) GetCreativeERIDExternalIDPairs(ctx context.Context, offset, lim
 	path := fmt.Sprintf("/v3/creative/list/erid_external_ids?offset=%d&limit=%d", offset, limit)
 
 	var response CreativeERIDExternalIDPairsResponse
-	if err := c.makeRequest(ctx, "GET", path, nil, &response); err != nil {
+	if err := c.request(ctx, "GET", path, nil, &response); err != nil {
 		return nil, fmt.Errorf("failed to get creative ERID/external ID pairs: %w", err)
 	}
 
@@ -151,7 +180,7 @@ func (c *Client) GetCreativeERIDExternalIDPairs(ctx context.Context, offset, lim
 func (c *Client) CreateCreativeV2(ctx context.Context, externalID string, creative CreateCreativeV2Request) error {
 	path := fmt.Sprintf("/v2/creative/%s", externalID)
 
-	if err := c.makeRequest(ctx, "PUT", path, creative, nil); err != nil {
+	if err := c.request(ctx, "PUT", path, creative, nil); err != nil {
 		return fmt.Errorf("failed to create creative (v2): %w", err)
 	}
 
@@ -164,7 +193,7 @@ func (c *Client) GetCreativeV2(ctx context.Context, externalID string) (*Creativ
 	path := fmt.Sprintf("/v2/creative/%s", externalID)
 
 	var creative Creative
-	if err := c.makeRequest(ctx, "GET", path, nil, &creative); err != nil {
+	if err := c.request(ctx, "GET", path, nil, &creative); err != nil {
 		return nil, fmt.Errorf("failed to get creative (v2): %w", err)
 	}
 
@@ -177,7 +206,7 @@ func (c *Client) GetCreativeByERIDV2(ctx context.Context, erid string) (*Creativ
 	path := fmt.Sprintf("/v2/creative/by_erid/%s", url.PathEscape(erid))
 
 	var creative Creative
-	if err := c.makeRequest(ctx, "GET", path, nil, &creative); err != nil {
+	if err := c.request(ctx, "GET", path, nil, &creative); err != nil {
 		return nil, fmt.Errorf("failed to get creative by ERID (v2): %w", err)
 	}
 
@@ -189,7 +218,7 @@ func (c *Client) GetCreativeByERIDV2(ctx context.Context, erid string) (*Creativ
 func (c *Client) CreateCreativeV3(ctx context.Context, externalID string, creative CreateCreativeV3Request) error {
 	path := fmt.Sprintf("/v3/creative/%s", externalID)
 
-	if err := c.makeRequest(ctx, "PUT", path, creative, nil); err != nil {
+	if err := c.request(ctx, "PUT", path, creative, nil); err != nil {
 		return fmt.Errorf("failed to create creative (v3): %w", err)
 	}
 
@@ -202,7 +231,7 @@ func (c *Client) GetCreativeV3(ctx context.Context, externalID string) (*Creativ
 	path := fmt.Sprintf("/v3/creative/%s", externalID)
 
 	var creative Creative
-	if err := c.makeRequest(ctx, "GET", path, nil, &creative); err != nil {
+	if err := c.request(ctx, "GET", path, nil, &creative); err != nil {
 		return nil, fmt.Errorf("failed to get creative (v3): %w", err)
 	}
 
@@ -215,7 +244,7 @@ func (c *Client) GetCreativeByERIDV3(ctx context.Context, erid string) (*Creativ
 	path := fmt.Sprintf("/v3/creative/by_erid/%s", url.PathEscape(erid))
 
 	var creative Creative
-	if err := c.makeRequest(ctx, "GET", path, nil, &creative); err != nil {
+	if err := c.request(ctx, "GET", path, nil, &creative); err != nil {
 		return nil, fmt.Errorf("failed to get creative by ERID (v3): %w", err)
 	}
 
@@ -231,7 +260,7 @@ func (c *Client) AddTextsToCreative(ctx context.Context, externalID string, text
 		Texts: texts,
 	}
 
-	if err := c.makeRequest(ctx, "POST", path, request, nil); err != nil {
+	if err := c.request(ctx, "POST", path, request, nil); err != nil {
 		return fmt.Errorf("failed to add texts to creative: %w", err)
 	}
 
@@ -247,7 +276,7 @@ func (c *Client) AddMediaToCreative(ctx context.Context, externalID string, medi
 		MediaExternalIDs: mediaExternalIDs,
 	}
 
-	if err := c.makeRequest(ctx, "POST", path, request, nil); err != nil {
+	if err := c.request(ctx, "POST", path, request, nil); err != nil {
 		return fmt.Errorf("failed to add media to creative: %w", err)
 	}
 

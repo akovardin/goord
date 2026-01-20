@@ -12,10 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCreativeMethods(t *testing.T) {
-	// Create a test server
+func TestClient_CreativeMethods(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Handle different endpoints
 		switch {
 		case r.URL.Path == "/v3/creative" && r.Method == "GET":
 			handleGetCreatives(w, r)
@@ -46,11 +44,10 @@ func TestCreativeMethods(t *testing.T) {
 	}))
 	defer server.Close()
 
-	// Create a client with the test server URL
-	client := NewClient(Config{
-		BaseURL: server.URL,
-		Token:   "test-token",
-	})
+	client, _ := NewClient(
+		WithBase(server.URL),
+		WithToken("test-token"),
+	)
 
 	t.Run("GetCreatives", func(t *testing.T) {
 		response, err := client.GetCreatives(context.Background(), 0, 10)
@@ -141,7 +138,6 @@ func TestCreativeMethods(t *testing.T) {
 	})
 }
 
-// Helper functions for test handlers
 func stringPtr(s string) *string {
 	return &s
 }

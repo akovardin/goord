@@ -7,37 +7,27 @@ import (
 	"net/url"
 )
 
-// DictionaryService handles communication with the dictionary related methods of the ORD API
-type DictionaryService struct {
-	client *Client
-}
-
-// KKTUItem represents a KKTU code with its description
 type KKTUItem struct {
 	Code string `json:"code"`
 	Name string `json:"name"`
 }
 
-// KKTUResponse represents the response for KKTU codes
 type KKTUResponse struct {
 	TotalItemsCount int        `json:"total_items_count"`
 	Limit           int        `json:"limit"`
 	Items           []KKTUItem `json:"items"`
 }
 
-// ERIRMessageItem represents an ERIR message with its translation
 type ERIRMessageItem struct {
 	Message string `json:"message"`
 	Name    string `json:"name"`
 }
 
-// ERIRMessageResponse represents the response for ERIR messages
 type ERIRMessageResponse struct {
 	Items []ERIRMessageItem `json:"items"`
 }
 
-// GetKKTUCodes retrieves KKTU codes
-func (s *DictionaryService) GetKKTUCodes(ctx context.Context, search, lang string, offset, limit int, codes []string) (*KKTUResponse, error) {
+func (s *Client) GetKKTUCodes(ctx context.Context, search, lang string, offset, limit int, codes []string) (*KKTUResponse, error) {
 	params := url.Values{}
 	if search != "" {
 		params.Set("search", search)
@@ -61,7 +51,7 @@ func (s *DictionaryService) GetKKTUCodes(ctx context.Context, search, lang strin
 	}
 
 	var response KKTUResponse
-	err := s.client.makeRequest(ctx, http.MethodGet, path, nil, &response)
+	err := s.request(ctx, http.MethodGet, path, nil, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -69,8 +59,7 @@ func (s *DictionaryService) GetKKTUCodes(ctx context.Context, search, lang strin
 	return &response, nil
 }
 
-// GetERIRMessage retrieves translation for a single ERIR message
-func (s *DictionaryService) GetERIRMessage(ctx context.Context, lang, message string) (*ERIRMessageResponse, error) {
+func (s *Client) GetERIRMessage(ctx context.Context, lang, message string) (*ERIRMessageResponse, error) {
 	params := url.Values{}
 	if lang != "" {
 		params.Set("lang", lang)
@@ -85,7 +74,7 @@ func (s *DictionaryService) GetERIRMessage(ctx context.Context, lang, message st
 	}
 
 	var response ERIRMessageResponse
-	err := s.client.makeRequest(ctx, http.MethodGet, path, nil, &response)
+	err := s.request(ctx, http.MethodGet, path, nil, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -93,8 +82,7 @@ func (s *DictionaryService) GetERIRMessage(ctx context.Context, lang, message st
 	return &response, nil
 }
 
-// PostERIRMessages retrieves translations for multiple ERIR messages
-func (s *DictionaryService) PostERIRMessages(ctx context.Context, lang string, messages []string) (*ERIRMessageResponse, error) {
+func (s *Client) PostERIRMessages(ctx context.Context, lang string, messages []string) (*ERIRMessageResponse, error) {
 	type request struct {
 		Lang     string   `json:"lang,omitempty"`
 		Messages []string `json:"messages"`
@@ -106,7 +94,7 @@ func (s *DictionaryService) PostERIRMessages(ctx context.Context, lang string, m
 	}
 
 	var response ERIRMessageResponse
-	err := s.client.makeRequest(ctx, http.MethodPost, "/v1/dict/erir_message", req, &response)
+	err := s.request(ctx, http.MethodPost, "/v1/dict/erir_message", req, &response)
 	if err != nil {
 		return nil, err
 	}

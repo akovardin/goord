@@ -11,8 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDictionaryService_GetKKTUCodes(t *testing.T) {
-	// Тестовые данные
+func TestClient_GetKKTUCodes(t *testing.T) {
 	testResponse := KKTUResponse{
 		TotalItemsCount: 2,
 		Limit:           10,
@@ -28,15 +27,11 @@ func TestDictionaryService_GetKKTUCodes(t *testing.T) {
 		},
 	}
 
-	// Создаем тестовый сервер
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Проверяем метод запроса
 		assert.Equal(t, "GET", r.Method, "Expected GET request")
 
-		// Проверяем путь запроса
 		assert.Equal(t, "/v1/dict/kktu", r.URL.Path, "Expected path /v1/dict/kktu")
 
-		// Проверяем параметры запроса
 		search := r.URL.Query().Get("search")
 		lang := r.URL.Query().Get("lang")
 		offset := r.URL.Query().Get("offset")
@@ -49,27 +44,20 @@ func TestDictionaryService_GetKKTUCodes(t *testing.T) {
 		assert.Equal(t, "20", limit, "Expected limit=20")
 		assert.Equal(t, "[code1 code2]", codes, "Expected codes=[code1 code2]")
 
-		// Возвращаем тестовый ответ
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(testResponse)
 	}))
 	defer server.Close()
 
-	// Создаем клиент с тестовым сервером
-	client := NewClient(Config{
-		BaseURL: server.URL,
-		Token:   "test-token",
-	})
+	client, _ := NewClient(
+		WithBase(server.URL),
+		WithToken("test-token"),
+	)
 
-	// Создаем сервис словаря
-	dictService := &DictionaryService{client: client}
-
-	// Выполняем запрос
-	result, err := dictService.GetKKTUCodes(context.Background(), "test", "ru", 10, 20, []string{"code1", "code2"})
+	result, err := client.GetKKTUCodes(context.Background(), "test", "ru", 10, 20, []string{"code1", "code2"})
 	require.NoError(t, err, "GetKKTUCodes should not return an error")
 
-	// Проверяем результат
 	assert.Equal(t, testResponse.TotalItemsCount, result.TotalItemsCount, "TotalItemsCount should match")
 	assert.Equal(t, testResponse.Limit, result.Limit, "Limit should match")
 	assert.Equal(t, len(testResponse.Items), len(result.Items), "Items count should match")
@@ -80,29 +68,22 @@ func TestDictionaryService_GetKKTUCodes(t *testing.T) {
 	}
 }
 
-func TestDictionaryService_GetKKTUCodes_Error(t *testing.T) {
-	// Создаем тестовый сервер, который возвращает ошибку
+func TestClient_GetKKTUCodes_Error(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer server.Close()
 
-	// Создаем клиент с тестовым сервером
-	client := NewClient(Config{
-		BaseURL: server.URL,
-		Token:   "test-token",
-	})
+	client, _ := NewClient(
+		WithBase(server.URL),
+		WithToken("test-token"),
+	)
 
-	// Создаем сервис словаря
-	dictService := &DictionaryService{client: client}
-
-	// Выполняем запрос
-	_, err := dictService.GetKKTUCodes(context.Background(), "", "", 0, 0, nil)
+	_, err := client.GetKKTUCodes(context.Background(), "", "", 0, 0, nil)
 	require.Error(t, err, "GetKKTUCodes should return an error")
 }
 
-func TestDictionaryService_GetERIRMessage(t *testing.T) {
-	// Тестовые данные
+func TestClient_GetERIRMessage(t *testing.T) {
 	testResponse := ERIRMessageResponse{
 		Items: []ERIRMessageItem{
 			{
@@ -112,70 +93,48 @@ func TestDictionaryService_GetERIRMessage(t *testing.T) {
 		},
 	}
 
-	// Создаем тестовый сервер
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Проверяем метод запроса
 		assert.Equal(t, "GET", r.Method, "Expected GET request")
-
-		// Проверяем путь запроса
 		assert.Equal(t, "/v1/dict/erir_message", r.URL.Path, "Expected path /v1/dict/erir_message")
-
-		// Проверяем параметры запроса
 		lang := r.URL.Query().Get("lang")
 		message := r.URL.Query().Get("message")
-
 		assert.Equal(t, "ru", lang, "Expected lang=ru")
 		assert.Equal(t, "SUCCESS", message, "Expected message=SUCCESS")
-
-		// Возвращаем тестовый ответ
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(testResponse)
 	}))
 	defer server.Close()
 
-	// Создаем клиент с тестовым сервером
-	client := NewClient(Config{
-		BaseURL: server.URL,
-		Token:   "test-token",
-	})
+	client, _ := NewClient(
+		WithBase(server.URL),
+		WithToken("test-token"),
+	)
 
-	// Создаем сервис словаря
-	dictService := &DictionaryService{client: client}
-
-	// Выполняем запрос
-	result, err := dictService.GetERIRMessage(context.Background(), "ru", "SUCCESS")
+	result, err := client.GetERIRMessage(context.Background(), "ru", "SUCCESS")
 	require.NoError(t, err, "GetERIRMessage should not return an error")
 
-	// Проверяем результат
 	assert.Equal(t, len(testResponse.Items), len(result.Items), "Items count should match")
 	assert.Equal(t, testResponse.Items[0].Message, result.Items[0].Message, "Message should match")
 	assert.Equal(t, testResponse.Items[0].Name, result.Items[0].Name, "Name should match")
 }
 
-func TestDictionaryService_GetERIRMessage_Error(t *testing.T) {
-	// Создаем тестовый сервер, который возвращает ошибку
+func TestClient_GetERIRMessage_Error(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer server.Close()
 
-	// Создаем клиент с тестовым сервером
-	client := NewClient(Config{
-		BaseURL: server.URL,
-		Token:   "test-token",
-	})
+	client, _ := NewClient(
+		WithBase(server.URL),
+		WithToken("test-token"),
+	)
 
-	// Создаем сервис словаря
-	dictService := &DictionaryService{client: client}
-
-	// Выполняем запрос
-	_, err := dictService.GetERIRMessage(context.Background(), "", "")
+	_, err := client.GetERIRMessage(context.Background(), "", "")
 	require.Error(t, err, "GetERIRMessage should return an error")
 }
 
-func TestDictionaryService_PostERIRMessages(t *testing.T) {
-	// Тестовые данные
+func TestClient_PostERIRMessages(t *testing.T) {
 	testResponse := ERIRMessageResponse{
 		Items: []ERIRMessageItem{
 			{
@@ -189,23 +148,17 @@ func TestDictionaryService_PostERIRMessages(t *testing.T) {
 		},
 	}
 
-	// Создаем тестовый сервер
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Проверяем метод запроса
 		assert.Equal(t, "POST", r.Method, "Expected POST request")
 
-		// Проверяем путь запроса
 		assert.Equal(t, "/v1/dict/erir_message", r.URL.Path, "Expected path /v1/dict/erir_message")
 
-		// Проверяем заголовки
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"), "Expected Content-Type application/json")
 
-		// Проверяем тело запроса
 		var reqBody map[string]interface{}
 		err := json.NewDecoder(r.Body).Decode(&reqBody)
 		assert.NoError(t, err, "Should be able to decode request body")
 
-		// Проверяем данные в теле запроса
 		assert.Equal(t, "ru", reqBody["lang"], "Lang should match")
 		messages, ok := reqBody["messages"].([]interface{})
 		assert.True(t, ok, "Messages should be an array")
@@ -213,27 +166,20 @@ func TestDictionaryService_PostERIRMessages(t *testing.T) {
 		assert.Equal(t, "SUCCESS", messages[0], "First message should match")
 		assert.Equal(t, "ERROR", messages[1], "Second message should match")
 
-		// Возвращаем тестовый ответ
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(testResponse)
 	}))
 	defer server.Close()
 
-	// Создаем клиент с тестовым сервером
-	client := NewClient(Config{
-		BaseURL: server.URL,
-		Token:   "test-token",
-	})
+	client, _ := NewClient(
+		WithBase(server.URL),
+		WithToken("test-token"),
+	)
 
-	// Создаем сервис словаря
-	dictService := &DictionaryService{client: client}
-
-	// Выполняем запрос
-	result, err := dictService.PostERIRMessages(context.Background(), "ru", []string{"SUCCESS", "ERROR"})
+	result, err := client.PostERIRMessages(context.Background(), "ru", []string{"SUCCESS", "ERROR"})
 	require.NoError(t, err, "PostERIRMessages should not return an error")
 
-	// Проверяем результат
 	assert.Equal(t, len(testResponse.Items), len(result.Items), "Items count should match")
 
 	for i, item := range testResponse.Items {
@@ -242,23 +188,17 @@ func TestDictionaryService_PostERIRMessages(t *testing.T) {
 	}
 }
 
-func TestDictionaryService_PostERIRMessages_Error(t *testing.T) {
-	// Создаем тестовый сервер, который возвращает ошибку
+func TestClient_PostERIRMessages_Error(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer server.Close()
 
-	// Создаем клиент с тестовым сервером
-	client := NewClient(Config{
-		BaseURL: server.URL,
-		Token:   "test-token",
-	})
+	client, _ := NewClient(
+		WithBase(server.URL),
+		WithToken("test-token"),
+	)
 
-	// Создаем сервис словаря
-	dictService := &DictionaryService{client: client}
-
-	// Выполняем запрос
-	_, err := dictService.PostERIRMessages(context.Background(), "", []string{})
+	_, err := client.PostERIRMessages(context.Background(), "", []string{})
 	require.Error(t, err, "PostERIRMessages should return an error")
 }

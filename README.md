@@ -1,67 +1,49 @@
 # GoORD
 
-Клиент для работы с ОРД
-
-
-## Что реализовано
-
-1. Базовая структура HTTP-клиента (`ord/client.go`) с поддержкой аутентификации через JWT токен
-2. Реализация всех методов для работы с контрагентами:
-   - `GetPersons` - получение списка контрагентов с пагинацией
-   - `GetPerson` - получение конкретного контрагента по внешнему ID
-   - `CreatePerson` - создание или обновление контрагента
-3. Реализация всех методов для работы с договорами:
-   - `GetContracts` - получение списка договоров с пагинацией
-   - `GetContract` - получение конкретного договора по внешнему ID
-   - `CreateContract` - создание или обновление договора
-   - `RequestCID` - запрос CID для договора
-4. Реализация всех методов для работы с креативами:
-   - `GetCreatives` - получение списка креативов с пагинацией
-   - `GetCreativeERIDs` - получение списка маркеров рекламы
-   - `GetCreativeERIDExternalIDPairs` - получение списка пар маркеров рекламы и внешних идентификаторов
-   - `CreateCreativeV2` и `CreateCreativeV3` - создание или обновление креатива
-   - `GetCreativeV2` и `GetCreativeV3` - получение креатива по внешнему ID
-   - `GetCreativeByERIDV2` и `GetCreativeByERIDV3` - получение креатива по маркеру рекламы
-   - `AddTextsToCreative` - добавление текстов в креатив
-   - `AddMediaToCreative` - добавление медиафайлов в креатив
-5. Реализация всех методов для работы с рекламными площадками:
-   - `GetPads` - получение списка рекламных площадок с пагинацией
-   - `GetRestrictedPads` - получение списка требующих детализации URL площадок
-   - `GetPad` - получение конкретной рекламной площадки по внешнему ID
-   - `CreatePad` - создание или обновление рекламной площадки
-6. Реализация всех методов для работы с медиафайлами:
-   - `GetMediaList` - получение списка медиафайлов
-   - `UploadMedia` - загрузка медиафайла
-   - `GetMediaBinary` - получение бинарного медиафайла
-   - `GetMediaInfo` - получение данных медиафайла
-   - `GetMediaInfoBatch` - получение данных нескольких медиафайлов
-7. Реализация всех методов для работы с актами:
-   - `GetInvoices` - получение списка актов
-   - `GetInvoice` - получение акта по ID
-   - `CreateInvoiceHeader` - создание заголовка акта
-   - `AddContractsToInvoice` - добавление договоров в акт
-   - `DeleteInvoice` - удаление акта
-   - `SendInvoiceToErir` - отправка акта в ЕРИР
-   - `DeleteContractsFromInvoice` - удаление договоров из акта
-   - `CreateWholeInvoice` - создание полного акта
-8. Реализация всех методов для работы со статистикой:
-   - `CreateStatisticsV2` и `CreateStatisticsV3` - создание или обновление статистики
-   - `GetStatisticsList` - получение списка статистик
-   - `DeleteStatisticsV3` - удаление статистики
-9. Реализация всех методов для работы с внешними CID:
-   - `GetCIDList` - получение списка внешних CID
-   - `GetCID` - получение внешнего CID по значению
-   - `CreateCID` - добавление внешнего CID
+Клиент для работы с ОРД VK. Документация [по API тут](https://ord.vk.com/help/api/).
 
 Структура кода соответствует спецификации Swagger API. Клиент поддерживает обработку ошибок и работает с контекстами для возможности отмены запросов.
 
-
 ## Пример использования
 
-Пример использования в `example/main.go`, демонстрирующий все методы работы с контрагентами и договорами
+Примеры использования в `examples`, демонстрирующие большинство методы работы с ОРД
 
 Для использования клиента необходимо:
+
 1. Импортировать пакет `gohome.4gophers.ru/kovardin/goord/ord`
 2. Создать экземпляр клиента с помощью `ord.NewClient()`
-3. Указать базовый URL (песочница или продакшн) и JWT токен
+3. Указать базовый URL (песочница или продакшн) и токен с помощью `ord.WithBase()` и `ord.WithToken()`
 4. Вызывать нужные методы для работы с контрагентами и договорами
+
+```go
+package main
+
+import (
+	"os"
+   "fmt"
+   "log"
+   "context"
+
+	"gohome.4gophers.ru/kovardin/goord/ord"
+)
+
+
+func main() {
+	client, _ := ord.NewClient(
+		ord.WithBase("https://api-sandbox.ord.vk.com"),
+		ord.WithToken(os.Getenv("TOKEN")),
+	)
+
+   persons, err := client.GetPersons(context.Background(), 0, 10)
+	if err != nil {
+		log.Printf("Error getting persons: %v\n", err)
+	} else {
+		fmt.Printf("Retrieved %d persons (total: %d)\n", len(persons.ExternalIDs), persons.TotalItemsCount)
+		for i, id := range persons.ExternalIDs {
+			fmt.Printf("  %d. %s\n", i+1, id)
+		}
+	}
+}
+```
+
+Больше про программирование и рекламу на [kodikapusta.ru](https://kodikapusta.ru/)

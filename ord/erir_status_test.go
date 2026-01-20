@@ -12,8 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestClient_GetObjectProcessingStatus(t *testing.T) {
-	// Тестовые данные
+func TestClient_GeErirStatus(t *testing.T) {
 	testResponse := ErirStatusEntity{
 		ErirStatus:      "verified",
 		UpdatedByUserTs: "2023-05-25T12:17:26Z",
@@ -21,62 +20,48 @@ func TestClient_GetObjectProcessingStatus(t *testing.T) {
 		Messages:        []string(nil),
 	}
 
-	// Создаем тестовый сервер
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Проверяем метод запроса
 		assert.Equal(t, "GET", r.Method, "Expected GET request")
-
-		// Проверяем путь запроса
 		assert.Equal(t, "/v1/person/id1/erir_status", r.URL.Path, "Expected path /v1/person/id1/erir_status")
-
-		// Возвращаем тестовый ответ
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(testResponse)
 	}))
 	defer server.Close()
 
-	// Создаем клиент с тестовым сервером
-	client := NewClient(Config{
-		BaseURL: server.URL,
-		Token:   "test-token",
-	})
+	client, _ := NewClient(
+		WithBase(server.URL),
+		WithToken("test-token"),
+	)
 
-	// Выполняем запрос
-	result, err := client.GetObjectProcessingStatus(context.Background(), "person", "id1")
-	require.NoError(t, err, "GetObjectProcessingStatus should not return an error")
+	result, err := client.GetErirStatus(context.Background(), "person", "id1")
+	require.NoError(t, err, "GetErirStatus should not return an error")
 
-	// Проверяем результат
 	assert.Equal(t, testResponse.ErirStatus, result.ErirStatus, "ErirStatus should match")
 	assert.Equal(t, testResponse.UpdatedByUserTs, result.UpdatedByUserTs, "UpdatedByUserTs should match")
 	assert.Equal(t, testResponse.FinalizedTs, result.FinalizedTs, "FinalizedTs should match")
 	assert.Equal(t, testResponse.Messages, result.Messages, "Messages should match")
 }
 
-func TestClient_GetObjectProcessingStatus_Error(t *testing.T) {
-	// Создаем тестовый сервер, который возвращает ошибку
+func TestClient_GetErirStatus_Error(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Internal Server Error")
 	}))
 	defer server.Close()
 
-	// Создаем клиент с тестовым сервером
-	client := NewClient(Config{
-		BaseURL: server.URL,
-		Token:   "test-token",
-	})
+	client, _ := NewClient(
+		WithBase(server.URL),
+		WithToken("test-token"),
+	)
 
-	// Выполняем запрос
-	_, err := client.GetObjectProcessingStatus(context.Background(), "person", "id1")
-	require.Error(t, err, "GetObjectProcessingStatus should return an error")
+	_, err := client.GetErirStatus(context.Background(), "person", "id1")
+	require.Error(t, err, "GetErirStatus should return an error")
 
-	// Проверяем, что ошибка содержит ожидаемый текст
 	assert.Contains(t, err.Error(), "failed to get object processing status", "Error message should contain expected text")
 }
 
-func TestClient_GetAdObjectProcessingStatus(t *testing.T) {
-	// Тестовые данные
+func TestClient_GetErirStatus(t *testing.T) {
 	testResponse := ErirStatusEntities{
 		TotalItemsCount: 1,
 		Limit:           10,
@@ -95,15 +80,9 @@ func TestClient_GetAdObjectProcessingStatus(t *testing.T) {
 		},
 	}
 
-	// Создаем тестовый сервер
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Проверяем метод запроса
 		assert.Equal(t, "GET", r.Method, "Expected GET request")
-
-		// Проверяем путь запроса
 		assert.Equal(t, "/v1/erir_statuses", r.URL.Path, "Expected path /v1/erir_statuses")
-
-		// Проверяем параметры запроса
 		dataType := r.URL.Query().Get("data_type")
 		erirStatus := r.URL.Query().Get("erir_status")
 		offset := r.URL.Query().Get("offset")
@@ -118,24 +97,20 @@ func TestClient_GetAdObjectProcessingStatus(t *testing.T) {
 		assert.Equal(t, "5", limitPerEntity, "Expected limit_per_entity=5")
 		assert.Equal(t, []string{"id1", "id2"}, externalID, "Expected external_id=[id1,id2]")
 
-		// Возвращаем тестовый ответ
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(testResponse)
 	}))
 	defer server.Close()
 
-	// Создаем клиент с тестовым сервером
-	client := NewClient(Config{
-		BaseURL: server.URL,
-		Token:   "test-token",
-	})
+	client, _ := NewClient(
+		WithBase(server.URL),
+		WithToken("test-token"),
+	)
 
-	// Выполняем запрос
-	result, err := client.GetAdObjectProcessingStatus(context.Background(), "person", "verified", 0, 10, 5, []string{"id1", "id2"})
+	result, err := client.GetErirStatuses(context.Background(), "person", "verified", 0, 10, 5, []string{"id1", "id2"})
 	require.NoError(t, err, "GetAdObjectProcessingStatus should not return an error")
 
-	// Проверяем результат
 	assert.Equal(t, testResponse.TotalItemsCount, result.TotalItemsCount, "TotalItemsCount should match")
 	assert.Equal(t, testResponse.Limit, result.Limit, "Limit should match")
 	assert.Equal(t, testResponse.LimitPerEntity, result.LimitPerEntity, "LimitPerEntity should match")
@@ -153,30 +128,25 @@ func TestClient_GetAdObjectProcessingStatus(t *testing.T) {
 	assert.Equal(t, expectedItem.Messages, item.Messages, "Messages should match")
 }
 
-func TestClient_GetAdObjectProcessingStatus_Error(t *testing.T) {
-	// Создаем тестовый сервер, который возвращает ошибку
+func TestClient_GetErirStatuses_Error(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Internal Server Error")
 	}))
 	defer server.Close()
 
-	// Создаем клиент с тестовым сервером
-	client := NewClient(Config{
-		BaseURL: server.URL,
-		Token:   "test-token",
-	})
+	client, _ := NewClient(
+		WithBase(server.URL),
+		WithToken("test-token"),
+	)
 
-	// Выполняем запрос
-	_, err := client.GetAdObjectProcessingStatus(context.Background(), "person", "verified", 0, 10, 5, []string{"id1"})
+	_, err := client.GetErirStatuses(context.Background(), "person", "verified", 0, 10, 5, []string{"id1"})
 	require.Error(t, err, "GetAdObjectProcessingStatus should return an error")
 
-	// Проверяем, что ошибка содержит ожидаемый текст
 	assert.Contains(t, err.Error(), "failed to get ad object processing statuses", "Error message should contain expected text")
 }
 
-func TestClient_PostAdObjectProcessingStatus(t *testing.T) {
-	// Тестовые данные
+func TestClient_PostErirStatuses(t *testing.T) {
 	testResponse := ErirStatusEntities{
 		TotalItemsCount: 1,
 		Limit:           10,
@@ -195,7 +165,7 @@ func TestClient_PostAdObjectProcessingStatus(t *testing.T) {
 		},
 	}
 
-	testRequest := PostAdObjectProcessingStatusRequest{
+	testRequest := ErirStatusRequest{
 		DataType:       "person",
 		ErirStatus:     "verified",
 		ExternalID:     []string{"id1", "id2"},
@@ -204,19 +174,11 @@ func TestClient_PostAdObjectProcessingStatus(t *testing.T) {
 		LimitPerEntity: 5,
 	}
 
-	// Создаем тестовый сервер
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Проверяем метод запроса
 		assert.Equal(t, "POST", r.Method, "Expected POST request")
-
-		// Проверяем путь запроса
 		assert.Equal(t, "/v1/erir_statuses", r.URL.Path, "Expected path /v1/erir_statuses")
-
-		// Проверяем заголовки
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"), "Expected Content-Type application/json")
-
-		// Читаем и проверяем тело запроса
-		var request PostAdObjectProcessingStatusRequest
+		var request ErirStatusRequest
 		err := json.NewDecoder(r.Body).Decode(&request)
 		require.NoError(t, err, "Should be able to decode request body")
 
@@ -227,24 +189,20 @@ func TestClient_PostAdObjectProcessingStatus(t *testing.T) {
 		assert.Equal(t, testRequest.Limit, request.Limit, "Limit should match")
 		assert.Equal(t, testRequest.LimitPerEntity, request.LimitPerEntity, "LimitPerEntity should match")
 
-		// Возвращаем тестовый ответ
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(testResponse)
 	}))
 	defer server.Close()
 
-	// Создаем клиент с тестовым сервером
-	client := NewClient(Config{
-		BaseURL: server.URL,
-		Token:   "test-token",
-	})
+	client, _ := NewClient(
+		WithBase(server.URL),
+		WithToken("test-token"),
+	)
 
-	// Выполняем запрос
-	result, err := client.PostAdObjectProcessingStatus(context.Background(), testRequest)
+	result, err := client.PostErirStatuses(context.Background(), testRequest)
 	require.NoError(t, err, "PostAdObjectProcessingStatus should not return an error")
 
-	// Проверяем результат
 	assert.Equal(t, testResponse.TotalItemsCount, result.TotalItemsCount, "TotalItemsCount should match")
 	assert.Equal(t, testResponse.Limit, result.Limit, "Limit should match")
 	assert.Equal(t, testResponse.LimitPerEntity, result.LimitPerEntity, "LimitPerEntity should match")
@@ -262,28 +220,24 @@ func TestClient_PostAdObjectProcessingStatus(t *testing.T) {
 	assert.Equal(t, expectedItem.Messages, item.Messages, "Messages should match")
 }
 
-func TestClient_PostAdObjectProcessingStatus_Error(t *testing.T) {
-	// Создаем тестовый сервер, который возвращает ошибку
+func TestClient_PostErirStatuses_Error(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Internal Server Error")
 	}))
 	defer server.Close()
 
-	// Создаем клиент с тестовым сервером
-	client := NewClient(Config{
-		BaseURL: server.URL,
-		Token:   "test-token",
-	})
+	client, _ := NewClient(
+		WithBase(server.URL),
+		WithToken("test-token"),
+	)
 
-	// Выполняем запрос
-	testRequest := PostAdObjectProcessingStatusRequest{
+	testRequest := ErirStatusRequest{
 		DataType: "person",
 	}
 
-	_, err := client.PostAdObjectProcessingStatus(context.Background(), testRequest)
+	_, err := client.PostErirStatuses(context.Background(), testRequest)
 	require.Error(t, err, "PostAdObjectProcessingStatus should return an error")
 
-	// Проверяем, что ошибка содержит ожидаемый текст
 	assert.Contains(t, err.Error(), "failed to post ad object processing statuses", "Error message should contain expected text")
 }
