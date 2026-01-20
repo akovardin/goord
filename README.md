@@ -19,30 +19,30 @@
 package main
 
 import (
-	"os"
+   "os"
    "fmt"
    "log"
    "context"
 
-	"gohome.4gophers.ru/kovardin/goord/ord"
+   "gohome.4gophers.ru/kovardin/goord/ord"
 )
 
 
 func main() {
-	client, _ := ord.NewClient(
-		ord.WithBase("https://api-sandbox.ord.vk.com"),
-		ord.WithToken(os.Getenv("TOKEN")),
-	)
+   client, _ := ord.NewClient(
+      ord.WithBase("https://api-sandbox.ord.vk.com"),
+      ord.WithToken(os.Getenv("TOKEN")),
+   )
 
    persons, err := client.GetPersons(context.Background(), 0, 10)
-	if err != nil {
-		log.Printf("Error getting persons: %v\n", err)
+   if err != nil {
+      log.Printf("Error getting persons: %v\n", err)
 	} else {
-		fmt.Printf("Retrieved %d persons (total: %d)\n", len(persons.ExternalIDs), persons.TotalItemsCount)
-		for i, id := range persons.ExternalIDs {
-			fmt.Printf("  %d. %s\n", i+1, id)
-		}
-	}
+      fmt.Printf("Retrieved %d persons (total: %d)\n", len(persons.ExternalIDs), persons.TotalItemsCount)
+      for i, id := range persons.ExternalIDs {
+         fmt.Printf("  %d. %s\n", i+1, id)
+      }
+   }
 }
 ```
 
