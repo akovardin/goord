@@ -104,12 +104,52 @@ func main() {
 		fmt.Printf("Contract contractor ID: %s\n", retrievedContract.ContractorExternalID)
 	}
 
-	// Example 7: Create a CID for a contract
-	fmt.Println("\nCreating a CID for contract...")
-	err = client.CreateCID(context.Background(), contractExternalID)
+	// Example 7: Request a CID for a contract
+	fmt.Println("\nRequesting a CID for contract...")
+	err = client.RequestCID(context.Background(), contractExternalID)
+	if err != nil {
+		log.Printf("Error requesting CID: %v", err)
+	} else {
+		fmt.Printf("CID requested successfully\n")
+	}
+
+	// Example 8: Working with CIDs
+	fmt.Println("\nWorking with CIDs...")
+
+	// Get a list of CIDs
+	fmt.Println("Getting list of CIDs...")
+	cidList, err := client.GetCIDList(context.Background(), 0, 10)
+	if err != nil {
+		log.Printf("Error getting CID list: %v", err)
+	} else {
+		fmt.Printf("Retrieved %d CIDs (total: %d)\n", len(cidList.CIDs), cidList.TotalItemsCount)
+		for i, id := range cidList.CIDs {
+			fmt.Printf("  %d. %s\n", i+1, id)
+		}
+	}
+
+	// Create a new CID
+	fmt.Println("\nCreating/updating a CID...")
+	cidValue := "test-cid-001"
+	cid := ord.CID{
+		CID:  cidValue,
+		Name: "Test CID",
+	}
+
+	err = client.CreateCID(context.Background(), cidValue, cid)
 	if err != nil {
 		log.Printf("Error creating CID: %v", err)
 	} else {
-		fmt.Printf("CID created successfully\n")
+		fmt.Printf("CID %s created/updated successfully\n", cidValue)
+	}
+
+	// Get a specific CID
+	fmt.Println("\nGetting a specific CID...")
+	retrievedCID, err := client.GetCID(context.Background(), cidValue)
+	if err != nil {
+		log.Printf("Error getting CID: %v", err)
+	} else {
+		fmt.Printf("Retrieved CID: %s\n", retrievedCID.CID)
+		fmt.Printf("CID name: %s\n", retrievedCID.Name)
 	}
 }

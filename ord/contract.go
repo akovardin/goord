@@ -84,13 +84,13 @@ func (c *Client) CreateContract(ctx context.Context, externalID string, contract
 	return nil
 }
 
-// CreateCID requests a CID for a contract
+// RequestCID requests a CID for a contract
 // POST /v1/contract/{external_id}/create_cid
-func (c *Client) CreateCID(ctx context.Context, externalID string) error {
+func (c *Client) RequestCID(ctx context.Context, externalID string) error {
 	path := fmt.Sprintf("/v1/contract/%s/create_cid", externalID)
 
 	if err := c.makeRequest(ctx, "POST", path, nil, nil); err != nil {
-		return fmt.Errorf("failed to create CID: %w", err)
+		return fmt.Errorf("failed to request CID: %w", err)
 	}
 
 	return nil

@@ -1,6 +1,6 @@
 module gohome.4gophers.ru/kovardin/goord
 
-require github.com/go-resty/resty/v2 v2.7.0
+go 1.24.5
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -8,5 +8,3 @@ require (
 	github.com/stretchr/testify v1.11.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-go 1.24.5
