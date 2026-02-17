@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -53,7 +54,9 @@ func (c *Client) UploadMedia(ctx context.Context, externalID string, filename st
 		return nil, fmt.Errorf("failed to copy file data: %w", err)
 	}
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close writer: %w", err)
+	}
 
 	url := c.base + path
 
@@ -72,7 +75,11 @@ func (c *Client) UploadMedia(ctx context.Context, externalID string, filename st
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Println("failed to close response body", err)
+		}
+	}()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -111,7 +118,11 @@ func (c *Client) GetMediaBinary(ctx context.Context, externalID string) ([]byte,
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Println("failed to close response body", err)
+		}
+	}()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
